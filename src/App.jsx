@@ -47,28 +47,48 @@ export default function App() {
     console.log(convToCurr);
   }
 
+  async function handleGetConversions() {
+    if(!convAmount || !convFromCurr || !convToCurr) {
+      return;
+    }
+    try {
+    const res = await fetch(`https://api.frankfurter.app/latest?amount=${convAmount}&from=${convFromCurr}&to=${convToCurr}`);
+    if (!res.ok) throw new Error("Problem getting currency conversion.");
+
+        const data = await res.json();
+        if (!data) throw new Error("No available conversion.");
+        const converted = data.rates[convToCurr];
+        alert(`You'll receive ${converted}`);
+    } catch (err) {
+      setError(err.message);
+    } 
+  }
+
   return (
     <>
       <h1 className="text-4xl text-purple-600">Currency Converter</h1>
 
       <ConvertBox>
-        <Amount onHandleAmount={handleAmount} />
-        {/* <ConvertFrom onHandleConvertFrom={handleConvertFrom} />
-        <ConvertTo onHandleConvertTo={handleConvertTo} /> */}
+        <Amount onHandleAmount={handleAmount} onHandleGetConversions={handleGetConversions} />
+       
+       {/* Select box for the convert from currency */}
         {!isLoading && !error ? (
           <AvailableCurrenciesSelect
             convList={convList}
             convert={"from"}
             onHandleConvertFrom={handleConvertFrom}
+            onHandleGetConversions={handleGetConversions}
           />
         ) : (
           <Loader />
         )}
+
+       {/* Select box for the convert from currency */}
         {!isLoading && !error ? (
           <AvailableCurrenciesSelect
             convList={convList}
             convert={"to"}
-            onHandleConvertTo={handleConvertTo}
+            onHandleConvertTo={handleConvertTo} onHandleGetConversions={handleGetConversions}
           />
         ) : (
           <Loader />
@@ -92,12 +112,12 @@ function ConvertBox({ children }) {
   );
 }
 
-function Amount({ onHandleAmount }) {
+function Amount({ onHandleAmount, onHandleGetConversions }) {
   return (
     <input
       type="number"
       placeholder="Amount to convert"
-      onChange={(e) => onHandleAmount(e.target.value)}
+      onChange={(e) => {onHandleAmount(e.target.value); onHandleGetConversions()}}
       className="text-2xl bg-orange-200 border-2 border-orange-600 p-1 placeholder-blue-800"
     ></input>
   );
@@ -108,6 +128,7 @@ function AvailableCurrenciesSelect({
   convert,
   onHandleConvertFrom,
   onHandleConvertTo,
+  onHandleGetConversions
 }) {
   return (
     <>
@@ -115,10 +136,9 @@ function AvailableCurrenciesSelect({
         className="text-2xl"
         onChange={(e) =>
           convert === "from"
-            ? onHandleConvertFrom(e.target.value)
-            : onHandleConvertTo(e.target.value)
-        }
-      >
+            ? (onHandleConvertFrom(e.target.value), onHandleGetConversions())
+            : (onHandleConvertTo(e.target.value), onHandleGetConversions())
+        }>
         <option value="">
           {convert === "from" ? "Convert from..." : "Convert to..."}
         </option>
