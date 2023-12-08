@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 
 import "./App.css";
 
-const apiStem = "https://api.frankfurter.app/latest?amount=10&from=GBP&to=USD";
+// https://api.frankfurter.app/latest?amount=10&from=GBP&to=USD
+
+// Get the available currencies from the API endpoint, currencies.
+// Use in the effect with async function fetchCurrencies(){}.
+
 const allCurrencies = "https://api.frankfurter.app/currencies";
 
 export default function App() {
   const [convList, setConvList] = useState(null);
   const [convAmount, setConvAmount] = useState(0);
-  const [convFromCurr, setConvFromCurr] = useState(null);
-  const [convToCurr, setConvToCurr] = useState(null);
+  const [convFromCurr, setConvFromCurr] = useState("");
+  const [convToCurr, setConvToCurr] = useState("");
   const [convertedFinal, setConvertedFinal] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingRates, setIsGettingRates] = useState(false);
 
   const [error, setError] = useState("");
 
@@ -61,11 +66,11 @@ export default function App() {
   );
 
   async function handleGetConversions(convAmount, convFromCurr, convToCurr) {
-    // if (!convAmount || !convFromCurr || !convToCurr) {
-    //   return;
-    // }
+    if (convFromCurr === convToCurr) {
+      return;
+    }
     try {
-      setIsLoading(true);
+      setIsGettingRates(true);
       const res = await fetch(
         `https://api.frankfurter.app/latest?amount=${convAmount}&from=${convFromCurr}&to=${convToCurr}`
       );
@@ -78,7 +83,7 @@ export default function App() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setIsLoading(false);
+      setIsGettingRates(false);
     }
   }
 
@@ -87,10 +92,7 @@ export default function App() {
       <h1 className="text-5xl font-bold text-purple-600">Currency Converter</h1>
 
       <ConvertBox>
-        <Amount
-          onHandleAmount={handleAmount}
-          // onHandleGetConversions={handleGetConversions}
-        />
+        <Amount onHandleAmount={handleAmount} />
 
         {/* Select box for the convert from currency */}
         {!isLoading && !error ? (
@@ -100,8 +102,6 @@ export default function App() {
             onHandleConvertFrom={handleConvertFrom}
             convFromCurr={convFromCurr}
             convToCurr={convToCurr}
-
-            // onHandleGetConversions={handleGetConversions}
           />
         ) : (
           <Loader />
@@ -115,17 +115,20 @@ export default function App() {
             onHandleConvertTo={handleConvertTo}
             convFromCurr={convFromCurr}
             convToCurr={convToCurr}
-            // onHandleGetConversions={handleGetConversions}
           />
         ) : (
           <Loader />
         )}
-        <ConvertedMessage
-          convAmount={convAmount}
-          convFromCurr={convFromCurr}
-          convToCurr={convToCurr}
-          convertedFinal={convertedFinal}
-        />
+        {!isGettingRates && !error ? (
+          <ConvertedMessage
+            convAmount={convAmount}
+            convFromCurr={convFromCurr}
+            convToCurr={convToCurr}
+            convertedFinal={convertedFinal}
+          />
+        ) : (
+          <GettingRates />
+        )}
       </ConvertBox>
     </>
   );
@@ -139,20 +142,25 @@ function Loader() {
   );
 }
 
+function GettingRates() {
+  return (
+    <h2 className="text-4xl font-bold mx-10 text-red-800">Getting rates...</h2>
+  );
+}
+
 function ConvertBox({ children }) {
   return (
     <div className="flex flex-col w-[50rem] gap-3 mt-5 mx-5">{children}</div>
   );
 }
 
-function Amount({ onHandleAmount, onHandleGetConversions }) {
+function Amount({ onHandleAmount }) {
   return (
     <input
       type="number"
       placeholder="Amount to convert"
       onChange={(e) => {
         onHandleAmount(e.target.value);
-        // onHandleGetConversions();
       }}
       className="text-3xl bg-orange-200 border-2 border-orange-600 p-2 placeholder-blue-800 outline-none"
     ></input>
@@ -164,23 +172,18 @@ function AvailableCurrenciesSelect({
   convert,
   onHandleConvertFrom,
   onHandleConvertTo,
-  onHandleGetConversions,
   convFromCurr,
   convToCurr,
 }) {
   return (
     <>
       <select
-        className="text-3xl p-2 outline-none border-[1px] border-blue-700"
+        className="text-3xl p-2 outline-none border-[1px] border-blue-700 focus:bg-green-300 transition-all duration-500"
         onChange={(e) =>
           convert === "from"
             ? onHandleConvertFrom(e.target.value)
             : onHandleConvertTo(e.target.value)
         }
-
-        // convert === "from"
-        // ? (onHandleConvertFrom(e.target.value), onHandleGetConversions())
-        //     : (onHandleConvertTo(e.target.value), onHandleGetConversions())
       >
         <option className="text-3xl" value="">
           {convert === "from" ? "Convert from..." : "Convert to..."}
@@ -198,7 +201,7 @@ function AvailableCurrenciesSelect({
   );
 }
 
-function CurrencyCode({ currency, convFromCurr, convToCurr }) {
+function CurrencyCode({ currency }) {
   return (
     <option
       value={currency[0]}
@@ -215,6 +218,16 @@ function ConvertedMessage({
   convToCurr,
   convertedFinal,
 }) {
+  const sameCurrError = (
+    <p className="text-4xl text-red-800 font-bold">
+      Cannot convert the same currency.
+    </p>
+  );
+
+  if (convFromCurr === convToCurr && convFromCurr !== "" && convToCurr !== "") {
+    return sameCurrError;
+  }
+
   return convertedFinal > 0 ? (
     <>
       <p className="text-4xl">
@@ -236,6 +249,8 @@ function ConvertedMessage({
       </p>
     </>
   ) : (
-    <p className="text-4xl">Currencies or value not selected.</p>
+    <p className="text-4xl text-red-800 font-bold">
+      Currencies or value not selected.
+    </p>
   );
 }
