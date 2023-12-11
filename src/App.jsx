@@ -4,7 +4,7 @@ import "./App.css";
 
 // https://api.frankfurter.app/latest?amount=10&from=GBP&to=USD
 
-// Get the available currencies from the API endpoint, currencies.
+// Get the available currencies from the API endpoint, /currencies.
 // Use in the effect with async function fetchCurrencies(){}.
 
 const allCurrencies = "https://api.frankfurter.app/currencies";
@@ -14,12 +14,27 @@ export default function App() {
   const [convAmount, setConvAmount] = useState(0);
   const [convFromCurr, setConvFromCurr] = useState("");
   const [convToCurr, setConvToCurr] = useState("");
-  const [convertedFinal, setConvertedFinal] = useState("");
+  const [convertedFinal, setConvertedFinal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isGettingRates, setIsGettingRates] = useState(false);
 
   const [error, setError] = useState("");
 
+  // Dynamic title to show conversion
+  const titleChanger = `${convAmount} ${convFromCurr} is ${convertedFinal} ${convToCurr}.`;
+  console.log(titleChanger.length);
+
+  useEffect(() => {
+    if (!convFromCurr || !convToCurr) return;
+    document.title = titleChanger;
+
+    // Cleanup function
+    return function () {
+      document.title = "React Currency Converter";
+    };
+  }, [convFromCurr, convToCurr, titleChanger, setConvAmount]);
+
+  // Fetch current currency list from the API.
   useEffect(() => {
     async function fetchCurrencies() {
       try {
@@ -40,7 +55,10 @@ export default function App() {
   }, []);
 
   function handleAmount(amount) {
-    setConvAmount(amount);
+    setConvAmount(Number(amount));
+    if (!amount) {
+      setConvertedFinal(Number(0));
+    }
   }
 
   function handleConvertFrom(curr) {
@@ -119,12 +137,14 @@ export default function App() {
         ) : (
           <Loader />
         )}
+
         {!isGettingRates && !error ? (
           <ConvertedMessage
             convAmount={convAmount}
             convFromCurr={convFromCurr}
             convToCurr={convToCurr}
             convertedFinal={convertedFinal}
+            setConvertedFinal={setConvertedFinal}
           />
         ) : (
           <GettingRates />
@@ -217,6 +237,7 @@ function ConvertedMessage({
   convFromCurr,
   convToCurr,
   convertedFinal,
+  setConvertedFinal,
 }) {
   const sameCurrError = (
     <p className="text-4xl text-red-800 font-bold">
@@ -229,7 +250,7 @@ function ConvertedMessage({
   }
 
   return convertedFinal > 0 ? (
-    <>
+    <div className="mt-5">
       <p className="text-4xl">
         Converting from{" "}
         <span className="text-orange-500 font-bold"> {convFromCurr} </span> into{" "}
@@ -247,7 +268,18 @@ function ConvertedMessage({
         </span>
         .
       </p>
-    </>
+
+      <p className="text-3xl bg-red-300 p-2 mt-5 mb-2">
+        <span className="font-bold">Note: </span>Rates are updated by the API
+        around <span className="font-bold">4pm</span> CET.
+        <br />
+        Check your timezone. As such, Monday may show Friday's rates.
+      </p>
+      <p className="text-3xl bg-red-300 font-bold p-2">
+        Do not use these rates for financial purposes.
+        <br />I am learning React, and this is a learning project.
+      </p>
+    </div>
   ) : (
     <p className="text-4xl text-red-800 font-bold">
       Currencies or value not selected.

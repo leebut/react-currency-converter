@@ -11,5 +11,4 @@ The challenge uses the Frankfurter converter API
 
 ## Notes
 
-I have applied some basic tailwindcss styles, but the focus is on pracising fetching data for consumption rather than aesthetics.
-I may improve the UI in the future.
+I have applied some basic tailwindcss styles, but the focus is on pracising fetching data for learning purposes rather than aesthetics.
