@@ -39,7 +39,14 @@ export default function App() {
     return function () {
       document.title = "React Currency Converter";
     };
-  }, [convFromCurr, convToCurr, titleChanger, setConvAmount]);
+  }, [
+    convFromCurr,
+    convToCurr,
+    titleChanger,
+    convFcurr,
+    convTcurr,
+    setConvAmount,
+  ]);
 
   // Fetch current currency list from the API.
   useEffect(() => {
