@@ -24,8 +24,15 @@ export default function App() {
   const titleChanger = `${convAmount} ${convFromCurr} is ${convertedFinal} ${convToCurr}.`;
   console.log(titleChanger.length);
 
+  const convFcurr = convFromCurr;
+  const convTcurr = convToCurr;
+
   useEffect(() => {
     if (!convFromCurr || !convToCurr) return;
+    if (convFcurr === convTcurr) {
+      document.title = "Cannot convert same currency.";
+      return;
+    }
     document.title = titleChanger;
 
     // Cleanup function
@@ -150,6 +157,7 @@ export default function App() {
           <GettingRates />
         )}
       </ConvertBox>
+      <Footer />
     </>
   );
 }
@@ -170,7 +178,7 @@ function GettingRates() {
 
 function ConvertBox({ children }) {
   return (
-    <div className="flex flex-col w-[50rem] gap-3 mt-5 mx-5">{children}</div>
+    <div className="flex flex-col w-[40rem] gap-3 mt-5 mx-5">{children}</div>
   );
 }
 
@@ -250,13 +258,13 @@ function ConvertedMessage({
   }
 
   return convertedFinal > 0 ? (
-    <div className="mt-5">
-      <p className="text-4xl">
+    <div className="mt-5 bg-yellow-100 p-2">
+      <p className="text-3xl">
         Converting from{" "}
         <span className="text-orange-500 font-bold"> {convFromCurr} </span> into{" "}
         <span className="text-orange-500 font-bold">{convToCurr}</span>.
       </p>
-      <p className="text-4xl">
+      <p className="text-3xl">
         You will receive{" "}
         <span className="text-green-500 font-bold">
           {convertedFinal} {convToCurr}
@@ -268,21 +276,26 @@ function ConvertedMessage({
         </span>
         .
       </p>
-
-      <p className="text-3xl bg-red-300 p-2 mt-5 mb-2">
-        <span className="font-bold">Note: </span>Rates are updated by the API
-        around <span className="font-bold">4pm</span> CET.
-        <br />
-        Check your timezone. As such, Monday may show Friday's rates.
-      </p>
-      <p className="text-3xl bg-red-300 font-bold p-2">
-        Do not use these rates for financial purposes.
-        <br />I am learning React, and this is a learning project.
-      </p>
     </div>
   ) : (
     <p className="text-4xl text-red-800 font-bold">
       Currencies or value not selected.
     </p>
+  );
+}
+
+function Footer() {
+  return (
+    <div className="w-[50rem] pl-4">
+      <p className="text-3xl bg-red-300 p-2 mt-5 mb-2">
+        <span className="font-bold">Note: </span>Rates are updated by the API
+        service around <span className="font-bold">4pm CET</span>.
+        <br />
+      </p>
+      <p className="text-3xl bg-red-300 p-2">
+        Do not use these rates for financial purposes.
+        <br />I am learning React, and this is a learning project.
+      </p>
+    </div>
   );
 }
